@@ -1,4 +1,5 @@
 BEGIN TRANSACTION;
+DROP TABLE IF EXISTS `versionporg`;
 CREATE TABLE IF NOT EXISTS `versionporg` (
 	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
 	`version`	TEXT UNIQUE
@@ -14,6 +15,7 @@ INSERT INTO `versionporg` (id,version) VALUES (1,'21.34.04 06.04.07'),
  (9,'23.40.85 31.01.17'),
  (10,'29.40.44 28.01.07'),
  (11,NULL);
+DROP TABLE IF EXISTS `type`;
 CREATE TABLE IF NOT EXISTS `type` (
 	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
 	`name`	TEXT,
@@ -23,6 +25,7 @@ INSERT INTO `type` (id,name,comment) VALUES (1,'ПР','проводной'),
  (2,'РУ','радиоудлинитель'),
  (3,'СП','спутник'),
  (4,'GSM','GSM таксофон');
+DROP TABLE IF EXISTS `serviceman`;
 CREATE TABLE IF NOT EXISTS `serviceman` (
 	`id`	INTEGER UNIQUE,
 	`name`	TEXT UNIQUE,
@@ -56,11 +59,13 @@ INSERT INTO `serviceman` (id,name,use) VALUES (1,'Монтеры',1),
  (58,'Октябрьский Район',1),
  (59,'Сковородинский Район',1),
  (60,'Благовещенск Город',1);
+DROP TABLE IF EXISTS `region`;
 CREATE TABLE IF NOT EXISTS `region` (
 	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
 	`name`	TEXT
 );
 INSERT INTO `region` (id,name) VALUES (1,'Амурская обл');
+DROP TABLE IF EXISTS `phone`;
 CREATE TABLE IF NOT EXISTS `phone` (
 	`id`	INTEGER,
 	`address`	TEXT,
@@ -77,6 +82,14 @@ CREATE TABLE IF NOT EXISTS `phone` (
 	`line_numb`	TEXT,
 	PRIMARY KEY(`id`)
 );
+DROP TABLE IF EXISTS `lot`;
+CREATE TABLE IF NOT EXISTS `lot` (
+	`lot`	INTEGER
+);
+INSERT INTO `lot` (lot) VALUES (1),
+ (2),
+ (3);
+DROP TABLE IF EXISTS `district`;
 CREATE TABLE IF NOT EXISTS `district` (
 	`id`	INTEGER UNIQUE,
 	`name`	TEXT UNIQUE,
@@ -120,12 +133,13 @@ INSERT INTO `district` (id,name,use) VALUES (1,'Районы',1),
  (83,'УУС Благовещенский р-н',1),
  (84,'УУС Бурейский р-н',1),
  (85,'УУС Архаринский р-н',1);
+DROP TABLE IF EXISTS `AREA`;
 CREATE TABLE IF NOT EXISTS `AREA` (
 	`id`	INTEGER PRIMARY KEY AUTOINCREMENT,
-	`region`	INTEGER,
+	`region_id`	INTEGER,
 	`name`	TEXT
 );
-INSERT INTO `AREA` (id,region,name) VALUES (1,1,'Архаринский Район'),
+INSERT INTO `AREA` (id,region_id,name) VALUES (1,1,'Архаринский Район'),
  (2,1,'Белогорск Город'),
  (3,1,'Белогорский Район'),
  (4,1,'Благовещенск Город'),
@@ -155,6 +169,7 @@ INSERT INTO `AREA` (id,region,name) VALUES (1,1,'Архаринский Райо
  (28,1,'Углегорск Поселок'),
  (29,1,'Шимановск Город'),
  (30,1,'Шимановский Район');
+DROP INDEX IF EXISTS `phone_id`;
 CREATE UNIQUE INDEX IF NOT EXISTS `phone_id` ON `phone` (
 	`id`	DESC
 );
