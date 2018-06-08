@@ -135,6 +135,3 @@ if region.size > 0:
                                 print(row_np[5])
                                 print(row_np[6])
                                 np_id = get_np_id(reg_id, mun_id, pos_id, row_np[4], row_np[5], row_np[6])
-                                
-
-
