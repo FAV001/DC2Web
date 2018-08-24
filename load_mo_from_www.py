@@ -84,7 +84,7 @@ def update_municipalitet(region_id, text, cod):
     try:
         conn = sqlite3.connect('oktmo.db3')
         cur = conn.cursor()
-        sql = 'select id from mo where text = "%s" and region_id=%s' % (text, region_id)
+        sql = 'select id from mo where cod = "%s" and region_id=%s' % (cod, region_id)
         cur.execute(sql)
         r = cur.fetchone()
         if (r != None):
@@ -101,7 +101,7 @@ def update_municipalitet(region_id, text, cod):
             sql = '''insert into mo (region_id,text,cod) values (%s,"%s","%s");''' % (region_id, text, cod)
             cur.execute(sql)
             conn.commit()
-            sql = 'select id from mo where text = "%s" and region_id=%s' % (text, region_id)
+            sql = 'select id from mo where cod = "%s" and region_id=%s' % (cod, region_id)
             cur.execute(sql)
             r = cur.fetchone()
             return r[0]
@@ -110,28 +110,29 @@ def update_municipalitet(region_id, text, cod):
     finally:
         conn.close()
 
-def update_np(region_id, text, cod):
+def update_np(region_id, text, cod, tnp):
     try:
         conn = sqlite3.connect('oktmo.db3')
         cur = conn.cursor()
-        sql = 'select id from mo where text = "%s" and region_id=%s' % (text, region_id)
+        sql = 'select id from np where cod = "%s" and region_id=%s' % (cod, region_id)
         cur.execute(sql)
         r = cur.fetchone()
         if (r != None):
-            sql = '''update mo
+            sql = '''update np
                 set region_id = %s,
-                text = "%s",
-                cod = "%s"
+                name = "%s",
+                cod = "%s",
+                tnp_id = %s
                 where id = %s
-            ''' % (region_id, text, cod, r[0])
+            ''' % (region_id, text, cod, tnp, r[0])
             cur.execute(sql)
             conn.commit()
             return r[0]
         else:
-            sql = '''insert into mo (region_id,text,cod) values (%s,"%s","%s");''' % (region_id, text, cod)
+            sql = '''insert into np (region_id,name,cod,tnp_id) values (%s,"%s","%s",%s);''' % (region_id, text, cod, tnp)
             cur.execute(sql)
             conn.commit()
-            sql = 'select id from mo where text = "%s" and region_id=%s' % (text, region_id)
+            sql = 'select id from np where cod = "%s" and region_id=%s' % (cod, region_id)
             cur.execute(sql)
             r = cur.fetchone()
             return r[0]
@@ -140,7 +141,7 @@ def update_np(region_id, text, cod):
     finally:
         conn.close()
 
-def get_tnp_id(text):
+def get_tnp(text):
     try:
         conn = sqlite3.connect('oktmo.db3')
         cur = conn.cursor()
@@ -148,7 +149,7 @@ def get_tnp_id(text):
         cur.execute(sql)
         r = cur.fetchone()
         if (r != None):
-            return r[0]
+            return {0: r[0], 1: r[1]}
         else:
             return None
     except sqlite3.Error as e:
@@ -156,21 +157,6 @@ def get_tnp_id(text):
     finally:
         conn.close()
 
-def get_tnp_sn(text):
-    try:
-        conn = sqlite3.connect('oktmo.db3')
-        cur = conn.cursor()
-        sql = 'select id, short_name from tnp where full_name = "%s"' % (text)
-        cur.execute(sql)
-        r = cur.fetchone()
-        if (r != None):
-            return r[1]
-        else:
-            return None
-    except sqlite3.Error as e:
-        print(e)
-    finally:
-        conn.close()
 
 def main():
     config = ConfigObj('call.cfg')
@@ -207,27 +193,30 @@ def main():
                     url3 = 'http://www.oktmo.ru/municipality_registry/?code=' + cod
                     html3 = get_html(url3, proxy)
                     t4 = get_list(html3, 'div', {"id": "container"})
-                    #t4 = get_list(temp, 'p')
-                    # for mo_row in t4[0]:
-                    #     if mo_row.name == 'p' and mo_row.next.name == 'b':
-                    #         mo_text = mo_row.contents[1].strip()
-                    #         mo_cod = mo_row.contents[0].next[:-4]
-                    #         update_municipalitet(region_id, mo_text, mo_cod)
-                    #         print(mo_row)
+                    for mo_row in t4[0]:
+                        if mo_row.name == 'p' and mo_row.next.name == 'b':
+                            mo_text = mo_row.contents[1].strip()
+                            mo_cod = mo_row.contents[0].next[:-4]
+                            update_municipalitet(region_id, mo_text, mo_cod)
+                            print(mo_row)
 
                     #список типов н.п. и их количество
                     t3 = get_list(html2, 'table')[1]
-                    df = pd.DataFrame(pd.read_html(str(t3))[0],columns=['count','name']
-                    #df = pd.read_html(str(t3))[0]
-                    df['sname'] = df.apply(lambda row: get_tnp_id(row[2]), axis=1)
-                    df['id'] = df.apply(lambda row: get_tnp_sn(row[2]), axis=1)
-                    # for tnp_row in df.itertuples():
-                    #     tnp = get_tnp(tnp_row[2])
-                    #     if tnp != None:
-                    #         df.set_value(tnp_row.Index, 3, tnp[0])
-                    #         #tnp_row[3] = tnp[0]
-                    #         #tnp_row[4] = tnp[1]
-                    #     print(tnp_row[1], tnp_row[0])
+                    df = pd.read_html(str(t3))[0]
+                    df.columns = ['count', 'name']
+                    snames = []
+                    tnp_id = []
+                    #добавляем в список столбцы - коротное название типа н.п. и его ID
+                    for tnp_row in df['name']:
+                        tnp = get_tnp(tnp_row)
+                        if tnp != None:
+                            snames.append(tnp[1])
+                            tnp_id.append(tnp[0])
+                        else:
+                            snames.append('')
+                            tnp_id.append(0)
+                    df['sname'] = snames
+                    df['id'] = tnp_id
 
                     #обрабатываем населенные пункты субъектов РФ
                     url4 = 'http://www.oktmo.ru/locality_registry/?code=' + cod.ljust(11,"0")
@@ -236,10 +225,18 @@ def main():
                     for np_row in t5[0]:
                         if np_row.name == 'p' and np_row.next.name == 'b':
                             np_text = np_row.contents[1].strip()
-                            np_cod = np_row.contents[0].next[:-4]
-                            #update_np(region_id, np_text, np_cod)
+                            np_cod = np_row.contents[0].next[0:11]
+                            for tnp_row in df.values:
+                                #ищем вхождение короткого имени типа в название НП
+                                #print(tnp_row)
+                                #print(np_text.find(tnp_row[2]))
+                                if np_text.find(tnp_row[2]) == 0 and np_text[len(tnp_row[2])+1:].find('.') == -1:
+                                    #print('есть вхождение')
+                                    np_text = np_text[len(tnp_row[2])+1:]
+                                    np_id = tnp_row[3]
+                                    break
+                            update_np(region_id, np_text, np_cod, np_id)
                             print(np_row)
-                        
                 print(row)
             else:
                 check = False
@@ -250,7 +247,7 @@ def main():
                 check = True
                 print(row)
                 okrug_id = get_okrug_id(row.text)
-        
+
     #print(t)
 
 if __name__ == '__main__':

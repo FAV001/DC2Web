@@ -1,1 +1,8 @@
 call.cfg
+Web/*
+temp/ошибки по нп.txt
+.gitignore
+logs/*
+load/*
+loaded/*
+temp/*

@@ -26,7 +26,7 @@ for row in phones_serviceman_id:
         with cur_ib.execute(sql):
             seviceman = cur_ib.fetchone()
         name = seviceman[1]
-        s = "insert into serviceman values (%s,'%s',1);" % (row[0], name)
+        s = "insert into serviceman values (%s,'%s',0);" % (row[0], name)
         cur.execute(s)
         con.commit()
 con.close()
