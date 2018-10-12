@@ -14,14 +14,18 @@ def put_to_db(phone, data, cod):
         cur.execute(sql)
         r = cur.fetchone()
         if (r != None):
+            sql = '''update result_day_ssfo
+                    set phone_id = {},
+                    date = "{}",
+                    res = {}
+                    where id = {};'''.format(phone, data, cod, r[0])
+            cur.execute(sql)
+            conn.commit()
             return r[0]
         else:
             sql = '''insert into result_day_ssfo (phone_id,date,res) values ("%s", "%s", "%s");''' % (phone, data, cod)
             cur.execute(sql)
             conn.commit()
-            #sql = 'select id from result_day_ssfo where phone_id = "%s" and date = "%s"' % (phone, data)
-            #cur.execute(sql)
-            #r = cur.fetchone()
             return 'new'
     except sqlite3.Error as e:
         print(e)
@@ -62,6 +66,8 @@ def main():
                     else:
                         logging.info(u'Загрузили данные по %s таксофонам, процент %s' % (row['Плановое количество дней (Dp)'], row['Коэффициент доступности (Arf)']))
             try:
+                if (os.path.isfile(path_loaded_csv + f)):
+                    os.remove(path_loaded_csv + f)
                 os.rename(path_ssfo_csv + f, path_loaded_csv + f)
                 logging.info(u'перенесли файл %s в обработанные' % f)
             except Exception as identifier:

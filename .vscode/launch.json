@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "args": [
-                "-y 2018", "-m 08", "-d 18"
+                "-v"
             ]
         },
         {

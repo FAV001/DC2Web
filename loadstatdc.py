@@ -30,7 +30,7 @@ def countotzvon(phone_id, date):
         else:
             return 0
 
-def put_to_db(phone, data, cod, kol):
+def put_to_db(phone, data, cod, kol, cod_error):
     global con
     try:
         #conn_f = sqlite3.connect('dc.db3')
@@ -44,7 +44,7 @@ def put_to_db(phone, data, cod, kol):
             log_text = u'Выставили данные phone_id {},date {},res {},statconnect {}'.format(phone, data, cod, kol)
             logging.info(log_text)
             print(log_text)
-            sql = 'insert into result_day_dc (phone_id,date,res,statconnect) values ("{}", "{}", "{}", {});'.format(phone, data, cod, kol)
+            sql = 'insert into result_day_dc (phone_id,date,res,statconnect,cod_error) values ("{}", "{}", "{}", {}, {});'.format(phone, data, cod, kol, cod_error)
             cur.execute(sql)
             con.commit()
             return 'new'
@@ -126,7 +126,7 @@ def codotzvona(phone_id, date):
     con_stat = fdb.connect(host=server, database=db_stat, user=user, password=userpass)
     cur_stat = con_stat.cursor()
     d = datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m.%Y")
-    sql = "select * from allfails where phone_id = %s and (DATE_TIME > '%s 00:00' and DATE_TIME < '%s 23:59') and ((fail_code in (0,32,128)) and (fail_code not in (1,2,4)))" % (phone_id, d, d)
+    sql = "select * from allfails where phone_id = %s and (DATE_TIME > '%s 00:00' and DATE_TIME < '%s 23:59') order by DATE_TIME desc" % (phone_id, d, d)
     with cur_stat.execute(sql):
         r = cur_stat.fetchone()
         if r != None:
@@ -199,14 +199,14 @@ def main():
             print(phone[0])
             check = checktaksofonotzvon(phone[0], d)
             kol = countotzvon(phone[0], d)
+            cod_error = codotzvona(phone[0], d)
             if check:
-                cod_error = codotzvona(phone[0], d)
-                if cod_error == 32 or cod_error == 0:
-                    put_to_db(phone[0], d, True, kol)
+                if (cod_error == 32 or cod_error == 0 or cod_error == 128) and (kol != 0):
+                    put_to_db(phone[0], d, True, kol, cod_error)
                 else:
-                    put_to_db(phone[0], d, False, kol)
+                    put_to_db(phone[0], d, False, kol, cod_error)
             else:
-                put_to_db(phone[0], d, False, kol)
+                put_to_db(phone[0], d, False, kol, cod_error)
 
 if __name__ == '__main__':
     main()
