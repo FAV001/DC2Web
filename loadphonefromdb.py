@@ -115,11 +115,63 @@ def set_phone(phone_id:int,
     con = sqlite3.connect('dc.db3')
     with con:
         cur = con.cursor()
-        sql = "SELECT id from phone where phone_id = {}".format(phone_id)
+        sql = "SELECT * from phone where phone_id = {}".format(phone_id)
         cur.execute(sql)
         r = cur.fetchone()
         if r != None:
-            return r[0]
+            sql = 'update phone set '
+            if r[2] != address:
+                sql += ' address = "{}",'.format(address)
+                log_text = u'  Для таксофона {} изменилось поле address с {} на {}'.format(phone_id, r[2], address)
+                logging.info(log_text)
+            if r[3] != fias:
+                sql += ' fias = "{}",'.format(fias)
+                log_text = u'  Для таксофона {} изменилось поле fias с {} на {}'.format(phone_id, r[3], fias)
+                logging.info(log_text)
+            if r[10] != work_sam:
+                sql += ' work_sam = {},'.format(work_sam)
+                log_text = u'  Для таксофона {} изменилось поле work_sam с {} на {}'.format(phone_id, r[10], work_sam)
+                logging.info(log_text)
+            if r[6] != versionprog:
+                sql += ' versionprog_id = {},'.format(versionprog)
+                log_text = u'  Для таксофона {} изменилось поле versionprog_id с {} на {}'.format(phone_id, r[6], versionprog)
+                logging.info(log_text)
+            if r[12] != LOT_NUMB:
+                sql += ' LOT_NUMB = "{}",'.format(LOT_NUMB)
+                log_text = u'  Для таксофона {} изменилось поле LOT_NUMB с {} на {}'.format(phone_id, r[12], LOT_NUMB)
+                logging.info(log_text)
+            if r[11] != COMPETITION_NUMB:
+                sql += ' COMPETITION_NUMB = "{}",'.format(COMPETITION_NUMB)
+                log_text = u'  Для таксофона {} изменилось поле COMPETITION_NUMB с {} на {}'.format(phone_id, r[11], COMPETITION_NUMB)
+                logging.info(log_text)
+            if r[13] != ABC_NUMB:
+                sql += ' ABC_NUMB = "{}",'.format(ABC_NUMB)
+                log_text = u'  Для таксофона {} изменилось поле ABC_NUMB с {} на {}'.format(phone_id, r[13], ABC_NUMB)
+                logging.info(log_text)
+            if r[14] != LINE_NUMB:
+                sql += ' LINE_NUMB = "{}",'.format(LINE_NUMB)
+                log_text = u'  Для таксофона {} изменилось поле LINE_NUMB с {} на {}'.format(phone_id, r[14], LINE_NUMB)
+                logging.info(log_text)
+            if r[8] != SLOT_ID:
+                sql += ' SLOT_ID = {},'.format(SLOT_ID)
+                log_text = u'  Для таксофона {} изменилось поле SLOT_ID с {} на {}'.format(phone_id, r[8], SLOT_ID)
+                logging.info(log_text)
+            if r[5] != serviceman:
+                sql += ' serviceman_id = {},'.format(serviceman)
+                log_text = u'  Для таксофона {} изменилось поле serviceman_id с {} на {}'.format(phone_id, r[5], serviceman)
+                logging.info(log_text)
+            if r[4] != district:
+                sql += ' district_id = {},'.format(district)
+                log_text = u'  Для таксофона {} изменилось поле district_id с {} на {}'.format(phone_id, r[4], district)
+                logging.info(log_text)
+            if r[15] != postcode:
+                sql += ' postcode = "{}",'.format(postcode)
+                log_text = u'  Для таксофона {} изменилось поле postcode с {} на {}'.format(phone_id, r[15], postcode)
+                logging.info(log_text)
+            sql += ' dateupdate = "{}"'.format(cur_date.strftime("%Y-%m-%d"))
+            sql += ' where phone_id = {}'.format(phone_id)
+            cur.execute(sql)
+            return r[1]
         else:
             sql = """insert into phone (
                         phone_id,
@@ -134,8 +186,9 @@ def set_phone(phone_id:int,
                         serviceman_id,
                         district_id,
                         fias,
-                        postcode)
-                    values ({}, '{}',{},{},'{}','{}','{}','{}',{},{},{},'{}','{}')""".format(
+                        postcode,
+                        dateupdate)
+                    values ({}, '{}',{},{},'{}','{}','{}','{}',{},{},{},'{}','{}','{}')""".format(
                         phone_id,
                         address,
                         work_sam,
@@ -148,14 +201,20 @@ def set_phone(phone_id:int,
                         serviceman,
                         district,
                         fias,
-                        postcode)
+                        postcode,
+                        cur_date.strftime("%Y-%m-%d"))
             cur.execute(sql)
             log_text = u'  Добавили таксофон {}'.format(phone_id)
             logging.info(log_text)
             print(cur.lastrowid)
             return cur.lastrowid
 
-    pass
+def close_phone():
+    con = sqlite3.connect('dc.db3')
+    with con:
+        cur = con.cursor()
+        sql = 'update phone set dateclose = "{0}" where dateupdate < "{0}" and dateclose is Null'.format(cur_date.strftime("%Y-%m-%d"))
+        cur.execute(sql)
 
 def get_fias_from_address(text:str):
     r = re.compile(r".{8}-.{4}-.{4}-.{4}-.{12}")
@@ -201,7 +260,7 @@ def main():
             postcode=post)
         #logging.info(phone)
         print(phone)
-
+    close_phone()
 
     log_text = u'Завершили скрипт'
     logging.info(log_text)
